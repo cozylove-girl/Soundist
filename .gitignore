@@ -1,0 +1,39 @@
+# Gradle, Kotlin and Android local state
+.gradle/
+.gradle-*/
+.android-*/
+.kotlin/
+build/
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+**/.chrome-profile/
+local.properties
+
+# Local signing material
+signing.properties
+*.jks
+*.keystore
+
+# Generated packages and local verification output
+releases/
+target-codex-*/
+ui*.xml
+*.log
+RADIO_DOWNLOAD_LOG.tsv
+
+# Download staging and local tool caches
+tools/radio-staging/
+tools/radio-packs/
+tools/ffmpeg/
+__pycache__/
+*.py[cod]
+
+# Editor and operating-system files
+.idea/
+.vscode/*.local.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.bak

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "measuredBy": "self-write-ebur128-real-samples",
+  "measurementRevision": 1,
+  "engineVersion": "kotlin-generated-radio-02",
+  "samplePackVersion": "vsco-2-ce",
+  "seed": "arrangement-default",
+  "sections": ["head", "middle", "dense"],
+  "contentHash": "0000000000000000",
+  "synthesisPath": false,
+  "note": "真实 VSCO 采样 + 自写 EBU R128；待 FFmpeg ebur128 复核后改 measuredBy=ffmpeg-ebur128-real-samples 并 bump schemaVersion。",
+  "targets": {"sleep": -55.0, "focus": -40.0, "rest": -45.0},
+  "presets": {
+    "deep-sea": {"category": "sleep", "targetLufs": -55.00, "measuredLufs": -31.34, "trimDb": -23.66, "truePeakDbTp": -25.84, "clamped": false},
+    "moon-tide": {"category": "sleep", "targetLufs": -55.00, "measuredLufs": -60.91, "trimDb": 5.91, "truePeakDbTp": -45.25, "clamped": false},
+    "night-train": {"category": "sleep", "targetLufs": -55.00, "measuredLufs": -31.37, "trimDb": -23.63, "truePeakDbTp": -26.52, "clamped": false},
+    "endless-focus": {"category": "focus", "targetLufs": -40.00, "measuredLufs": -49.72, "trimDb": 9.72, "truePeakDbTp": -35.24, "clamped": false},
+    "warm-study": {"category": "focus", "targetLufs": -40.00, "measuredLufs": -46.88, "trimDb": 6.88, "truePeakDbTp": -34.53, "clamped": false},
+    "rain-piano": {"category": "rest", "targetLufs": -45.00, "measuredLufs": -59.71, "trimDb": 14.71, "truePeakDbTp": -43.46, "clamped": false},
+    "morning-mist": {"category": "rest", "targetLufs": -45.00, "measuredLufs": -55.75, "trimDb": 10.75, "truePeakDbTp": -46.50, "clamped": false},
+    "signal-garden": {"category": "rest", "targetLufs": -45.00, "measuredLufs": -58.13, "trimDb": 13.13, "truePeakDbTp": -47.51, "clamped": false},
+    "bamboo-strings": {"category": "rest", "targetLufs": -45.00, "measuredLufs": -67.80, "trimDb": 22.80, "truePeakDbTp": -59.18, "clamped": false},
+    "custom-lab": {"category": "rest", "targetLufs": -45.00, "measuredLufs": -58.60, "trimDb": 13.60, "truePeakDbTp": -36.67, "clamped": false}
+  }
+}

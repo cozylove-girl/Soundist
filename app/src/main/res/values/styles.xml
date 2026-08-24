@@ -1,0 +1,17 @@
+<resources>
+    <style name="Theme.Soundist" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#0E1417</item>
+        <item name="android:navigationBarColor">#0E1417</item>
+        <item name="android:windowBackground">@color/launch_page_background</item>
+        <item name="android:colorAccent">#55B6A3</item>
+    </style>
+
+    <style name="Theme.Soundist.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/launch_icon_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/soundist_splash_icon_v2</item>
+        <item name="windowSplashScreenAnimationDuration">0</item>
+        <item name="postSplashScreenTheme">@style/Theme.Soundist</item>
+    </style>
+</resources>

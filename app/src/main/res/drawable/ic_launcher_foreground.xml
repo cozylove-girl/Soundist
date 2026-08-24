@@ -1,0 +1,5 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:top="21dp" android:bottom="21dp" android:left="21dp" android:right="21dp">
+        <bitmap android:src="@drawable/soundist_icon_master" android:gravity="fill" android:filter="true" />
+    </item>
+</layer-list>

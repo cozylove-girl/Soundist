@@ -1,0 +1,69 @@
+{
+  "trackId": "bach-goldberg-aria-cc0",
+  "sourcePage": "https://commons.wikimedia.org/wiki/File:988-aria.lehman1.ogg",
+  "fetchedAt": "2026-08-16T06:13:59.087412+00:00",
+  "fileUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d8/988-aria.lehman1.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2017-11-02 09:51:09",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "<div class=\"fn\">\n\"Aria\", <i>Goldberg Variations</i></div>",
+      "source": "commons-desc-page"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Goldberg Variations|CC-Zero|Files with no machine-readable author|PD-old-100-expired|Audio files of Baroque period classical music|CC-PD-Mark|Audio files of music by Johann Sebastian Bach|Audio files of harpsichord music",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "\"Aria\", <i>Goldberg Variations</i>",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://archive.org/details/goldberg-variations-Grossman-Blanchet1720-Lehman-Prince/988-v05.lehman1.mp3\">https://archive.org/details/goldberg-variations-Grossman-Blanchet1720-Lehman-Prince/988-v05.lehman1.mp3</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "Public domain",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Public domain",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "false",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Copyrighted": {
+      "value": "False",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "pd",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  }
+}
