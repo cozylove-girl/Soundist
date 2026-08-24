@@ -12,15 +12,24 @@ local.properties
 
 # Local signing material
 signing.properties
+keystore.properties
 *.jks
 *.keystore
+*.p12
+*.pem
+.env
+.env.*
+!.env.example
 
 # Generated packages and local verification output
 releases/
+*.apk
+*.aab
 target-codex-*/
 ui*.xml
 *.log
 RADIO_DOWNLOAD_LOG.tsv
+captures/
 
 # Download staging and local tool caches
 tools/radio-staging/
