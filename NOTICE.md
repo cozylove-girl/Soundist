@@ -4,8 +4,10 @@
 
 Soundist is a substantial derivative development based on
 [Moodist](https://github.com/remvze/moodist). It is not an official Moodist
-release. The original Moodist software and Soundist application code are
-distributed under the repository `LICENSE` unless a file states otherwise.
+release. Soundist-owned code is provided under the repository `LICENSE`.
+Code and notices inherited from Moodist remain available under Moodist's MIT
+license, preserved at `LICENSES/Moodist-MIT.txt`. The PolyForm license does not
+replace or narrow rights granted by third-party licenses.
 
 ## Moodist ambient sounds
 
@@ -29,6 +31,12 @@ maintained in:
 - `VSCO_SAMPLE_LICENSE_MANIFEST.tsv`
 - `tools/license-snapshots/`
 
-Third-party audio remains governed by its own license and is not relicensed as
-MIT merely by inclusion in this repository.
+Third-party audio remains governed by its own license and is not relicensed
+under PolyForm merely by inclusion in this repository.
+
+## Brand assets
+
+The Soundist name, logo, application icon, fox artwork and launch artwork are
+not covered by the software license. Their terms are documented separately in
+`BRAND_ASSETS_LICENSE.md`.
 
