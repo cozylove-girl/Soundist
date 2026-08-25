@@ -3,6 +3,10 @@
   <h2>Soundist 声境</h2>
   <p>让声音成为一处可以停留的地方。</p>
   <p><em>A place to stay, made of sound.</em></p>
+  <p>
+    <a href="https://github.com/cozylove-girl/Soundist/releases/latest"><strong>下载 Android 版</strong></a>
+  </p>
+  <p><sub>前往最新 Release，下载 APK 后即可安装</sub></p>
 </div>
 
 ---
@@ -48,6 +52,8 @@ Soundist 收集这些细微的声音，也收留那些想暂时离开喧闹的�
 ## 开始
 
 Soundist 当前优先支持 Android。
+
+无需配置开发环境，可以直接前往 [最新 Release](https://github.com/cozylove-girl/Soundist/releases/latest) 下载 APK。首次安装时，Android 可能会询问是否允许安装来自浏览器或文件管理器的应用。
 
 <details>
 <summary>从源码构建</summary>
