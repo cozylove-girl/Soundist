@@ -61,7 +61,7 @@ Soundist 当前优先支持 Android。
 需要 JDK 17、Android SDK 36、Android NDK 27 与 CMake 3.22.1。
 
 ```powershell
-git clone https://github.com/cozylove-girl/Soundist.git
+git clone --depth 1 https://github.com/cozylove-girl/Soundist.git
 cd Soundist
 .\gradlew.bat :app:assembleDebug
 ```
@@ -80,9 +80,11 @@ Soundist 最初受到 [Moodist](https://github.com/remvze/moodist) 的启发，�
 
 提交代码、图片或音频前，请确认你拥有相应的分享权利。
 
+参与之前请阅读 [贡献指南](CONTRIBUTING.md)。安全问题请通过 [安全报告流程](SECURITY.md) 私下提交；关于本地数据、权限与联网行为，参见 [隐私说明](PRIVACY.md)。
+
 ## 许可
 
-Soundist 公开源码并欢迎非商业使用与共同改进，但不允许未经授权的商业复制。
+Soundist 源码公开，并欢迎非商业使用与共同改进，但不允许未经授权的商业复制。由于采用非商业许可，Soundist 属于 source-available 软件，而不是 OSI 定义下的开源软件。
 
 - Soundist 自有代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)，中文参考见 [LICENSE.zh-CN.md](LICENSE.zh-CN.md)。
 - Moodist 衍生部分继续遵守 [Moodist MIT License](LICENSES/Moodist-MIT.txt)。

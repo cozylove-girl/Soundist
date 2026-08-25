@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 私下报告安全漏洞
+    url: https://github.com/cozylove-girl/Soundist/security/advisories/new
+    about: 请勿在公开 Issue 中披露漏洞细节、密钥或个人数据。
+  - name: 讨论与体验建议
+    url: https://github.com/cozylove-girl/Soundist/discussions
+    about: 不确定是否属于 Bug 时，可以先在 Discussions 中交流。

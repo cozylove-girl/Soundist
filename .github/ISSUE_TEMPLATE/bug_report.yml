@@ -1,0 +1,46 @@
+name: Bug 报告
+description: 报告可以稳定复现的功能、音频或界面问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: 安全漏洞请不要在这里公开，请使用仓库 Security 页面中的私有报告入口。
+  - type: input
+    id: version
+    attributes:
+      label: Soundist 版本
+      placeholder: 例如 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 设备与 Android 版本
+      placeholder: 例如 Honor Magic6 / Android 16
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请按顺序说明如何稳定触发问题。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期表现
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际表现
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充信息
+      description: 可附完整页面截图、已移除个人信息的日志，以及耳机或扬声器等音频环境。
