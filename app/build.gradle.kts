@@ -74,6 +74,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    androidResources { noCompress += "opus" }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 

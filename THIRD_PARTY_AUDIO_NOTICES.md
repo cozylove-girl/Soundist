@@ -24,9 +24,12 @@ Soundist 是基于 Moodist 的深度二次开发，不是 Moodist 官方版本�
 - 安装包、音频清单与许可清单均包含 299 首录音，文件哈希一致。
 - 逐曲机器可读数据：`tools/license-snapshots/release-catalog-2026-08-20/release-license-manifest.json`
 - 逐曲署名与来源：`RADIO_RELEASE_ATTRIBUTION.md`
+- Opus 衍生文件的转码前后路径、哈希与码率：`RADIO_OPUS_TRANSCODE.tsv`
 - 许可证网页快照：`tools/license-snapshots/release-catalog-2026-08-20/licenses/`
 - 来源页快照：同目录的 `wikimedia/`、`opengameart/` 与 `incompetech/`。
 - App 在电台详情中提供逐曲创作者、来源页和许可证链接。CC BY 与 CC BY-SA 要求的信息不得从再分发版本中删除。
+
+安装包内的开放精选统一使用 Ogg Opus 衍生文件。转码只改变编码格式和打包哈希，不改变原录音的许可证；来源页、原始来源标识及转码前文件哈希继续保留在证据清单中。
 
 ## Moodist 环境声
 

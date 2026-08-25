@@ -21,6 +21,7 @@
 - 许可证文本存档：`tools/license-snapshots/release-catalog-2026-08-20/licenses/`
 - 来源页面存档：同目录的 `wikimedia/`、`opengameart/` 与 `incompetech/`
 - 安装包音频文件清单：`RADIO_AUDIO_MANIFEST.tsv`
+- 转码前后文件路径、哈希与码率：`RADIO_OPUS_TRANSCODE.tsv`
 - Android 全部音频来源与许可：`THIRD_PARTY_AUDIO_NOTICES.md`
 
 ## 再分发要求

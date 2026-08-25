@@ -21,9 +21,8 @@ class ListeningSelectorsTest {
         val official = RadioCatalog.initial.filter { it.group == RadioGroup.OFFICIAL }
         // 全量内置：所有曲目都走 asset:///radio/*，来源页/授权仍是网络元数据（非播放地址）。
         assertTrue(official.all { station -> station.tracks.isNotEmpty() && station.tracks.all { it.mediaUrl.startsWith("https://") && it.remoteCacheKey.startsWith("radio/") && it.localAssetUri != null && it.localAssetUri!!.startsWith("asset:///radio/") } })
-        // 基础 APK 内置曲目的真实扩展名：mp3 不得被硬编码成 .ogg。
-        val mp3Tracks = setOf("ambient-pad-i", "chopin-canon-f-minor", "jazz-avant")
-        official.flatMap { it.tracks }.filter { it.id in mp3Tracks }.forEach { assertEquals("asset:///radio/${it.id}.mp3", it.localAssetUri) }
+        // 基础 APK 内置曲目统一使用经过验证的 Ogg Opus 衍生文件。
+        assertTrue(official.flatMap { it.tracks }.all { it.localAssetUri == "asset:///radio/${it.id}.opus" })
         assertTrue(RadioCatalog.initial.filter { it.sourceKind == RadioSourceKind.GENERATED }.all { it.url.startsWith("generated://") })
         assertTrue(official.flatMap { it.tracks }.all { it.license != null && it.license!!.sourcePage.startsWith("https://") && it.license!!.licenseUrl.startsWith("https://") })
     }

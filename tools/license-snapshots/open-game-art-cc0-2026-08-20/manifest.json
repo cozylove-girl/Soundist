@@ -8,7 +8,7 @@
     "legalCodeSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
     "attributionRequired": false
   },
-  "derivativeProcess": "FFmpeg 9.0.1; loudnorm I=-18:TP=-1.5:LRA=11; Ogg Vorbis q5; 48000 Hz stereo",
+  "derivativeProcess": "Existing reviewed derivative repackaged with FFmpeg libopus; Ogg Opus VBR; 48000 Hz; per-track bitrate recorded below",
   "tracks": [
     {
       "id": "cc0-etirwer",
@@ -21,12 +21,14 @@
       "originalFile": "originals/etirwer.ogg",
       "originalBytes": 1963336,
       "originalSha256": "382c02bfb3d9abe1c9f432606dd95f27bcef28ac22097ccdcef12a8c608b421b",
-      "derivativePath": "app/src/main/assets/radio/cc0-etirwer.ogg",
-      "derivativeBytes": 1931614,
-      "derivativeSha256": "27e3de6b94173de7691e4c82e3f065f1386817a05d6b82445cd2e375eaab0bec",
+      "derivativePath": "app/src/main/assets/radio/cc0-etirwer.opus",
+      "derivativeBytes": 2378134,
+      "derivativeSha256": "20e1be811597e390e9d8200fff3b2b09ee1a4f99762c62f2c13ba3c93a39d399",
       "durationSeconds": 130.3,
       "integratedLufs": -18.0,
-      "truePeakDbfs": -2.6
+      "truePeakDbfs": -2.6,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-serenade-guitar",
@@ -39,12 +41,14 @@
       "originalFile": "originals/serenade-guitar.wav",
       "originalBytes": 22814532,
       "originalSha256": "4488ce8a1ca7752909a18c3b9a7554ae19ce9829914eb08a43821cfba87e81b6",
-      "derivativePath": "app/src/main/assets/radio/cc0-serenade-guitar.ogg",
-      "derivativeBytes": 2625128,
-      "derivativeSha256": "d410d3ea1ae5b0b246eaf270701dd8562d53c07d98e1abca587a92cc619f193c",
+      "derivativePath": "app/src/main/assets/radio/cc0-serenade-guitar.opus",
+      "derivativeBytes": 2339998,
+      "derivativeSha256": "a94845dbb65990f5f25f6bcbf770fd247c1486236990928fa5ee7ed102590808",
       "durationSeconds": 129.4,
       "integratedLufs": -18.2,
-      "truePeakDbfs": -6.4
+      "truePeakDbfs": -6.4,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-frets",
@@ -57,12 +61,14 @@
       "originalFile": "originals/frets.mp3",
       "originalBytes": 3616102,
       "originalSha256": "fce67449c27c1880825a9e9f1ece9bb2972aebf5b2e3f4e7459c0fe8030427e7",
-      "derivativePath": "app/src/main/assets/radio/cc0-frets.ogg",
-      "derivativeBytes": 4532043,
-      "derivativeSha256": "4d3e8716211911a3a6b0c81c8acb6a91e1cf130de10f9144aeb5466cba72db07",
+      "derivativePath": "app/src/main/assets/radio/cc0-frets.opus",
+      "derivativeBytes": 3960622,
+      "derivativeSha256": "8b941073309e47bea9b471606ffa72e149473f9660cd807363962e60be6814b7",
       "durationSeconds": 226.1,
       "integratedLufs": -18.0,
-      "truePeakDbfs": -3.3
+      "truePeakDbfs": -3.3,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-middle-nowhere-remix",
@@ -75,12 +81,14 @@
       "originalFile": "originals/middle-nowhere-remix.ogg",
       "originalBytes": 3937872,
       "originalSha256": "003bf65a448993de67ac83043e283a2ce53c09c7717f7974b5773ce00eac2eca",
-      "derivativePath": "app/src/main/assets/radio/cc0-middle-nowhere-remix.ogg",
-      "derivativeBytes": 3036323,
-      "derivativeSha256": "21d3efdf80fc4e8789d9a06a37f1a620082082d8e85c808b78d8c977cc4caa6e",
+      "derivativePath": "app/src/main/assets/radio/cc0-middle-nowhere-remix.opus",
+      "derivativeBytes": 2455121,
+      "derivativeSha256": "5fea7b355fc736d443e94c6983e1a09f047f51fa27b980f57e8801d45130fe3a",
       "durationSeconds": 171.6,
       "integratedLufs": -17.5,
-      "truePeakDbfs": -2.9
+      "truePeakDbfs": -2.9,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-sunset-plains",
@@ -93,12 +101,14 @@
       "originalFile": "originals/sunset-plains.wav",
       "originalBytes": 63298600,
       "originalSha256": "f3750f8eda8bf42662b12f5726404675689b50f05ccaa968c5cb2e33d9172a62",
-      "derivativePath": "app/src/main/assets/radio/cc0-sunset-plains.ogg",
-      "derivativeBytes": 5406562,
-      "derivativeSha256": "6a80daab5f1a584cd846eb6140f0d4ada11d02ddf586649734ad85edc2f040d1",
+      "derivativePath": "app/src/main/assets/radio/cc0-sunset-plains.opus",
+      "derivativeBytes": 5088969,
+      "derivativeSha256": "9ce4772ae207244ce3bbfd2f64b452052f33c36128a6c47264cb3d8afac60a63",
       "durationSeconds": 329.7,
       "integratedLufs": -17.4,
-      "truePeakDbfs": -4.5
+      "truePeakDbfs": -4.5,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-jazzy-blues",
@@ -111,12 +121,14 @@
       "originalFile": "originals/jazzy-blues.mp3",
       "originalBytes": 2103507,
       "originalSha256": "9e410244ba3bf767b57a97564a3886fada87661ec51346329f0c2b3435fe9858",
-      "derivativePath": "app/src/main/assets/radio/cc0-jazzy-blues.ogg",
-      "derivativeBytes": 892608,
-      "derivativeSha256": "0e696032128298686b0f162839dd29e71f6885a9b1559618b5511d7fc7c73d06",
+      "derivativePath": "app/src/main/assets/radio/cc0-jazzy-blues.opus",
+      "derivativeBytes": 775857,
+      "derivativeSha256": "548cffb5c5e994a0bd9725885924314179572a801e6ee56011368f3fafa2d0d0",
       "durationSeconds": 52.6,
       "integratedLufs": -17.8,
-      "truePeakDbfs": -2.0
+      "truePeakDbfs": -2.0,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-blue-intermission",
@@ -129,12 +141,14 @@
       "originalFile": "originals/blue-intermission.ogg",
       "originalBytes": 1507960,
       "originalSha256": "ad3bf97710980840bdf4b9d4daa3cc2d0cd58cdd6ea5b3445ab3cc43f73af69d",
-      "derivativePath": "app/src/main/assets/radio/cc0-blue-intermission.ogg",
-      "derivativeBytes": 2711398,
-      "derivativeSha256": "0421af57dff8b3bb81d0d05dd8a085bea9f93a07db219afd769678dc6dbc2627",
+      "derivativePath": "app/src/main/assets/radio/cc0-blue-intermission.opus",
+      "derivativeBytes": 3137132,
+      "derivativeSha256": "8d557e6f35f898ef3314a1acf235652c1bde687b144bc1476778956b7efa9fba",
       "durationSeconds": 236.8,
       "integratedLufs": -17.8,
-      "truePeakDbfs": -1.4
+      "truePeakDbfs": -1.4,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-fusion-jazz",
@@ -147,12 +161,14 @@
       "originalFile": "originals/fusion-jazz.ogg",
       "originalBytes": 4643715,
       "originalSha256": "645f7cd6ef7a56b22fe394ff006dae17348cf70c72aa9e2a9b4d7f70b2804af4",
-      "derivativePath": "app/src/main/assets/radio/cc0-fusion-jazz.ogg",
-      "derivativeBytes": 4106062,
-      "derivativeSha256": "6e1d753ac24ae63a86aa04d8fced64b12feaff358d40f867e9b7b170af8a32ed",
+      "derivativePath": "app/src/main/assets/radio/cc0-fusion-jazz.opus",
+      "derivativeBytes": 4061461,
+      "derivativeSha256": "ea2f586658b853dc0fa3203bc5e8e9599aafa6df9089405ddacb63ddce0962e9",
       "durationSeconds": 246.4,
       "integratedLufs": -18.2,
-      "truePeakDbfs": -2.7
+      "truePeakDbfs": -2.7,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-one-step",
@@ -165,12 +181,14 @@
       "originalFile": "originals/one-step-at-a-time.wav",
       "originalBytes": 27254520,
       "originalSha256": "351f4c04d435090d50c1a2c33de2e82a9ebea70242aa6a763486ae485d239daf",
-      "derivativePath": "app/src/main/assets/radio/cc0-one-step.ogg",
-      "derivativeBytes": 3092067,
-      "derivativeSha256": "8a0d757720fba3208c26f912d25a88861617361efa6cdce30ff833f52968afaa",
+      "derivativePath": "app/src/main/assets/radio/cc0-one-step.opus",
+      "derivativeBytes": 2535758,
+      "derivativeSha256": "36f185ee086bc9d9ef018e8236abb970a1c2cb923019f9b3a72d3f7487843440",
       "durationSeconds": 154.6,
       "integratedLufs": -18.0,
-      "truePeakDbfs": -3.5
+      "truePeakDbfs": -3.5,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     },
     {
       "id": "cc0-catchy-swing",
@@ -183,12 +201,14 @@
       "originalFile": "originals/catchy-swing.ogg",
       "originalBytes": 1096963,
       "originalSha256": "ff9d565c27bf1075bd447e33c1943814b8b6d3c99166c48e851e20d3d7f83c0e",
-      "derivativePath": "app/src/main/assets/radio/cc0-catchy-swing.ogg",
-      "derivativeBytes": 1069084,
-      "derivativeSha256": "99d24d0b0cf7c4555615236e1d3715b6d5f64e4968137e264fa85723011b198d",
+      "derivativePath": "app/src/main/assets/radio/cc0-catchy-swing.opus",
+      "derivativeBytes": 995822,
+      "derivativeSha256": "95e6d60cf10b7a882ec0c73a8f493b476c0d07f0a2e367473f9a7ffd829d9d22",
       "durationSeconds": 60.0,
       "integratedLufs": -17.8,
-      "truePeakDbfs": -1.3
+      "truePeakDbfs": -1.3,
+      "packagedCodec": "opus",
+      "packagedBitrateKbps": 112
     }
   ]
 }
