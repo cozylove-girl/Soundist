@@ -1,0 +1,82 @@
+name: 视觉设计提案
+description: 提交图标、启动画面、动效分镜或界面设计建议
+title: "[Design] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 提案类型
+      options:
+        - 应用图标与品牌视觉
+        - 启动静态图
+        - 启动动画与动效分镜
+        - 页面布局与组件
+        - 配色与视觉层级
+        - 无障碍与屏幕适配
+        - 其他视觉建议
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 希望解决的问题
+      description: 请说明现有体验中的问题，以及这个提案适用的页面或场景。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 设计思路
+      description: 描述视觉方向、交互变化和采用后的体验。
+    validations:
+      required: true
+
+  - type: textarea
+    id: preview
+    attributes:
+      label: 图片、分镜或原型
+      description: 可以将 PNG、JPG、GIF 或视频直接拖到这里，也可以提供 HTML 原型或 Figma 链接。
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: 素材来源与可编辑文件
+      description: 请列出字体、图片、纹理、图标等来源和许可，并说明采用后能否提供原始可编辑文件。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai_usage
+    attributes:
+      label: 是否使用生成式人工智能
+      options:
+        - 未使用
+        - 使用了，并已在下方说明
+        - 不确定，需要协助核对
+    validations:
+      required: true
+
+  - type: textarea
+    id: ai_details
+    attributes:
+      label: 生成式 AI 说明
+      description: 如有使用，请注明工具、模型、生成时间、人工修改范围，以及是否保留原始文件和提示词。未使用可填写“无”。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: 权利与授权确认
+      options:
+        - label: 我有权提交所附内容，并已如实说明第三方素材及生成式 AI 的参与情况。
+          required: true
+        - label: 若提案被采用，我允许 Soundist 在项目中使用、修改和分发所提交的设计；任何额外署名或许可条件已在上方写明。
+          required: true
+        - label: 我理解提交提案不代表一定采用，最终设计与调整由项目维护者决定。
+          required: true

@@ -80,6 +80,8 @@ Soundist 最初受到 [Moodist](https://github.com/remvze/moodist) 的启发，�
 
 欢迎提交 Issue、建议与 Pull Request。真实的使用感受尤其珍贵：哪一种声音让你愿意久留，哪个动作打断了沉浸，哪些地方还不够自然。
 
+视觉也欢迎一起完善。你可以提交应用图标、启动画面、动效分镜或界面改进的[设计提案](https://github.com/cozylove-girl/Soundist/issues/new?template=design_proposal.yml)，并直接在 Issue 中附上图片、原型或 Figma 链接。请说明设计思路、素材来源、使用许可和生成式 AI 的参与情况；提案是否采用及如何调整，由项目维护者最终决定。
+
 提交代码、图片或音频前，请确认你拥有相应的分享权利。
 
 参与之前请阅读 [贡献指南](CONTRIBUTING.md)。安全问题请通过 [安全报告流程](SECURITY.md) 私下提交；关于本地数据、权限与联网行为，参见 [隐私说明](PRIVACY.md)。
@@ -98,5 +100,6 @@ Soundist 源码公开，并欢迎非商业使用与共同改进，但不允许�
 - Moodist 衍生部分继续遵守 [Moodist MIT License](LICENSES/Moodist-MIT.txt)。
 - 音频、采样和第三方代码遵守各自的许可与署名要求。
 - Soundist 名称、Logo、狐狸形象、图标与启动插画不随代码授权，详见 [品牌素材声明](BRAND_ASSETS_LICENSE.md)。
+- 应用图标与启动插画的生成式人工智能辅助来源见 [品牌素材来源记录](BRAND_ASSET_PROVENANCE.md)。
 
 完整来源与致谢见 [NOTICE.md](NOTICE.md) 和 [THIRD_PARTY_AUDIO_NOTICES.md](THIRD_PARTY_AUDIO_NOTICES.md)。商业使用请事先取得仓库所有者的书面许可。

@@ -38,5 +38,7 @@ under PolyForm merely by inclusion in this repository.
 
 The Soundist name, logo, application icon, fox artwork and launch artwork are
 not covered by the software license. Their terms are documented separately in
-`BRAND_ASSETS_LICENSE.md`.
+`BRAND_ASSETS_LICENSE.md`. Generative-AI assistance and subsequent human
+adaptation of the application icon and launch artwork are disclosed in
+`BRAND_ASSET_PROVENANCE.md`.
 

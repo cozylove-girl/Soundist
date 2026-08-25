@@ -14,6 +14,8 @@ This reservation includes, without limitation:
 
 You may keep unmodified copies of these assets solely when building and testing an unmodified noncommercial copy of Soundist from this repository.
 
+The application icon and launch artwork were created with generative-AI assistance and subsequently selected, edited and adapted for Soundist. Their provenance is documented in `BRAND_ASSET_PROVENANCE.md`. This disclosure does not grant permission to reuse the Soundist name, visual identity or adapted assets.
+
 ---
 
 Soundist 名称、Logo、应用图标、狐狸形象、启动插画及其他具有品牌识别性的素材，不适用本仓库的 PolyForm Noncommercial 软件许可证。
@@ -21,3 +23,5 @@ Soundist 名称、Logo、应用图标、狐狸形象、启动插画及其他具�
 除非事先取得著作权人的书面许可，不得复制、修改、重新分发、销售、再许可这些素材，也不得将其用于标识其他应用、服务或衍生产品。
 
 仅在依据本仓库构建、测试未经修改的 Soundist 非商业副本时，可以保留这些品牌素材的原样副本。其他用途需要单独取得书面授权。
+
+应用图标与启动插画由生成式人工智能辅助创作，并经过选稿、修改和 Soundist 品牌及 Android 场景适配。详细来源记录见 [BRAND_ASSET_PROVENANCE.md](BRAND_ASSET_PROVENANCE.md)。该披露不构成对 Soundist 名称、视觉识别或适配后素材的额外授权。
