@@ -4,8 +4,7 @@ These files are copied into the APK and are played through `asset:///radio/...`.
 The runtime never streams the provenance URLs below. URLs remain metadata for
 license review.
 
-> 2026-08-20 全量打包：移除 5 个不再发布的 Open Music Archive 文件，加入 10 个经证据归档的 CC0 衍生文件；当前共 299 个音频文件。
-> 完整 SHA-256 / 编码 / 采样率 / 声道见仓库根 `RADIO_AUDIO_MANIFEST.tsv`。
+本目录包含 299 个随 Android 应用提供的开放精选音频文件。完整 SHA-256、编码、采样率与声道信息见仓库根目录 `RADIO_AUDIO_MANIFEST.tsv`；逐曲来源和许可见 `RADIO_RELEASE_ATTRIBUTION.md`。
 
 ## Packaged files (299)
 

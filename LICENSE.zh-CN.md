@@ -26,7 +26,7 @@
 
 ## 专利许可
 
-许可方就其能够许可、或以后有权许可的专利权利要求，授予你使用本软件所必需的专利许可。
+许可方就其能够许可、或以后有权许可，且你使用本软件时原本会侵犯的专利权利要求，授予你相应的专利许可。
 
 ## 非商业目的
 
@@ -72,5 +72,6 @@
 
 **使用**指你对本软件实施的、依法需要获得许可的任何行为。
 
-必要通知：Copyright (c) 2026 Soundist contributors。Soundist 自有代码仅允许用于非商业目的；商业使用必须另行取得 Soundist 仓库所有者的书面许可。
+`Required Notice: Copyright (c) 2026 cozylove-girl. Soundist-owned code is available for noncommercial use only. Commercial use requires a separate written license from cozylove-girl.`
 
+上述必要通知的中文含义为：Copyright (c) 2026 cozylove-girl。Soundist 自有代码仅允许用于非商业目的；商业使用必须另行取得 cozylove-girl 的书面许可。分发时应保留上方以 `Required Notice:` 开头的英文原文。

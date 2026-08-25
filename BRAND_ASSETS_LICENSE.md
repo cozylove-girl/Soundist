@@ -1,6 +1,6 @@
 # Soundist Brand Assets / Soundist 品牌素材
 
-Copyright (c) 2026 Soundist project owner. All rights reserved.
+Copyright (c) 2026 cozylove-girl. All rights reserved.
 
 The Soundist name, logo, application icon, fox artwork, launch artwork and other identifying brand assets are not licensed under the repository's PolyForm Noncommercial license. Unless the copyright owner gives prior written permission, you may not copy, modify, redistribute, sell, sublicense or use these assets to identify another application, service or derivative product.
 

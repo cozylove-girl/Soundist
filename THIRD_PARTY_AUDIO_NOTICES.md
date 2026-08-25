@@ -1,8 +1,8 @@
-# Soundist Android 音频许可与发行说明
+# Soundist Android 音频来源与许可
 
 最近核对：2026-08-24
 
-本文是 Android 安装包中音频资产的统一入口。它记录来源、许可义务、文件哈希和证据边界，不替代各许可证法律文本，也不构成法律意见。
+本文汇总 Android 安装包中音频资产的来源、适用许可、文件哈希与必要署名。本文不替代各许可证法律文本，也不构成法律意见。
 
 ## 项目关系与许可方式
 
@@ -10,25 +10,23 @@ Soundist 是基于 Moodist 的深度二次开发，不是 Moodist 官方版本�
 
 许可处理遵循 Moodist 的公开做法：保留 Moodist 的 MIT 版权与许可文本；对继承的第三方环境声保留 Moodist 公布的“Pixabay Content License 或 CC0”汇总声明。由于上游没有逐文件许可映射，Soundist 不会无依据地把 84 个文件全部改标为 CC0。
 
-## 实际打包范围
+## 随应用提供的音频
 
-| 资产组 | 数量 | 当前许可证据 | 发行判断 |
+| 资产组 | 数量 | 许可依据 | 适用条件 |
 |---|---:|---|---|
-| 开放精选电台 | 299 | 逐曲来源页、许可证、作者/演奏者字段、官方页面快照、打包 SHA-256 | 299 首均被审计脚本归类为可再分发；其中 57 首要求署名，90 首还带 ShareAlike 条件 |
+| 开放精选电台 | 299 | 逐曲来源页、许可证、创作者/演奏者、页面存档与 SHA-256 | 152 首为 Public Domain、CC0 或不强制署名；57 首适用 CC BY；90 首适用 CC BY-SA |
 | Moodist 环境声 | 84 | 与 Moodist 上游提交逐文件 SHA-256 一致；上游 MIT 文本与第三方资产声明已归档 | 作为 Moodist 二次开发沿用上游的 Pixabay/CC0 汇总声明；不虚构逐文件许可证 |
 | VSCO 2 CE 乐器采样 | 15 | CC0 1.0 全文、来源仓库、逐文件 SHA-256 | 可随 App 复制、修改和分发，无强制署名 |
-| 专注/休息提示音 | 1 | 本仓库提交 `4218d2573a429c70751733b007817de6a4f881db` 引入，SHA-256 已记录 | Soundist 项目资产，随本仓库按根目录 MIT License 分发 |
+| 专注/休息提示音 | 1 | 本仓库提交 `4218d2573a429c70751733b007817de6a4f881db` 引入，SHA-256 已记录 | Soundist 项目自有资产，随根目录 PolyForm Noncommercial 1.0.0 条款提供 |
 
 ## 开放精选电台
 
-- 当前打包数量、技术清单和许可清单均为 299 首，文件哈希全部一致。
-- 发行级逐曲数据：`tools/license-snapshots/release-catalog-2026-08-20/release-license-manifest.json`
-- 面向人的署名清单：`RADIO_RELEASE_ATTRIBUTION.md`
+- 安装包、音频清单与许可清单均包含 299 首录音，文件哈希一致。
+- 逐曲机器可读数据：`tools/license-snapshots/release-catalog-2026-08-20/release-license-manifest.json`
+- 逐曲署名与来源：`RADIO_RELEASE_ATTRIBUTION.md`
 - 许可证网页快照：`tools/license-snapshots/release-catalog-2026-08-20/licenses/`
 - 来源页快照：同目录的 `wikimedia/`、`opengameart/` 与 `incompetech/`。
-- App 已在电台详情中保存并展示逐曲作者、来源页和许可证链接。CC BY 与 CC BY-SA 信息不得从发行版中删除。
-
-`RADIO_LICENSE_MANIFEST.md` 现为当前许可入口摘要，不再保留容易与现状冲突的早期 80 首表格。
+- App 在电台详情中提供逐曲创作者、来源页和许可证链接。CC BY 与 CC BY-SA 要求的信息不得从再分发版本中删除。
 
 ## Moodist 环境声
 
@@ -45,7 +43,7 @@ Moodist 的 MIT 许可证适用于其软件；其 README 明确说明部分声�
 
 重要边界：Moodist 没有公开 84 个文件各自属于 Pixabay 还是 CC0，也没有逐文件原始素材页面。因此 Soundist 能完整证明文件来自哪个 Moodist 版本、与上游逐字节一致，并保留上游的全部公开许可声明；但不能诚实地为每个文件单独指定 CC0 或 Pixabay。
 
-Soundist 当前按 Moodist 已公开采用的方式集成和发行这些环境声，并将它们作为混音、定时、可视化和持续声场产品的一部分，而不是另行发布为独立素材包。若未来上游补充逐文件来源表，可直接把它并入 `AMBIENT_AUDIO_MANIFEST.tsv`，不需要修改 App 功能代码。
+Soundist 按 Moodist 公布的许可声明集成这些环境声，并将其用于应用内混音、定时、可视化和持续声场，不将其作为独立素材包提供。`AMBIENT_AUDIO_MANIFEST.tsv` 保留逐文件哈希及上游对应关系。
 
 ## VSCO 2 CE 采样
 
@@ -59,17 +57,18 @@ Soundist 当前按 Moodist 已公开采用的方式集成和发行这些环境�
 
 - 大小：63,548 bytes
 - SHA-256：`9638f0491ba5aeb005c9fc4a042b023ee1ec5f5b70ce91ee0e3c4dba7a2f9710`
-- 首次提交：`4218d2573a429c70751733b007817de6a4f881db`
+- 来源记录：本仓库提交 `4218d2573a429c70751733b007817de6a4f881db`
 
-仓库中没有它的外部下载记录或第三方许可页，因此将其登记为 Soundist 项目自有提示音，并随本仓库按根目录 MIT License 分发。若以后替换为第三方提示音，必须在替换时新增来源、许可证与 SHA-256，不能沿用本条记录。
+该文件为 Soundist 项目自有提示音，随根目录 PolyForm Noncommercial 1.0.0 条款提供，不属于 Moodist 的 MIT 授权范围。替换该文件时须同时更新来源、适用许可证和 SHA-256。
 
-## 发行时必须保留
+## 再分发时须保留
 
-1. 根目录 `LICENSE` 中 Moodist 派生软件的 MIT 版权与许可文本。
-2. `RADIO_RELEASE_ATTRIBUTION.md` 及逐曲证据清单，或者在 App 内提供等价且可访问的完整署名。
-3. 所有 CC BY-SA 曲目的许可证名称、作者、来源和 ShareAlike 提示。
-4. VSCO 2 CE 的 CC0 文本与样本清单。
-5. Moodist 环境声的上游来源、提交号、混合许可声明和 Pixabay/CC0 链接。
+1. 根目录 `LICENSE` 中 Soundist 自有部分适用的 PolyForm Noncommercial 1.0.0 条款及全部 `Required Notice:`。
+2. `LICENSES/Moodist-MIT.txt` 中 Moodist 继承部分适用的 MIT 版权与许可文本。
+3. `RADIO_RELEASE_ATTRIBUTION.md` 及逐曲证据清单，或者在 App 内提供等价且可访问的完整署名。
+4. 所有 CC BY-SA 曲目的许可证名称、作者、来源和 ShareAlike 提示。
+5. VSCO 2 CE 的 CC0 文本与样本清单。
+6. Moodist 环境声的上游来源、提交号、混合许可声明和 Pixabay/CC0 链接。
 
 ## 未被本文授权的内容
 

@@ -1,12 +1,12 @@
-# Soundist 开放精选：发行许可与署名
+# Soundist 开放精选：来源与署名
 
-> 本文由 `tools/audit_release_licenses.py` 根据 Android 实际打包资产生成。法律与证据详情保存在仓库，不要求在每张 App 频道卡片重复显示。
+> 本文列出 Android 安装包内开放精选录音的创作者、来源与适用许可证。机器可读记录、来源页面存档和文件哈希保存在 `tools/license-snapshots/release-catalog-2026-08-20/`。
 
-## 发行结论
+## 许可概览
 
-- `redistributable`：152 首
-- `redistributable-with-attribution`：57 首
-- `redistributable-with-sharealike`：90 首
+- Public Domain、CC0 或不强制署名：152 首
+- 需要署名（CC BY）：57 首
+- 需要署名并遵守相同方式共享（CC BY-SA）：90 首
 
 ## 必须保留署名或相同许可的录音
 
@@ -162,7 +162,7 @@
 
 ## 公版与 CC0 来源记录
 
-这些曲目不强制署名，但仍保留来源页、创建者字段、官方元数据快照和文件哈希，便于发行审计。完整逐曲数据见 `release-license-manifest.json`。
+这些曲目不强制署名，但仍保留来源页、创建者字段、元数据存档和文件哈希，用于确认录音身份。完整逐曲数据见 `release-license-manifest.json`。
 
 ## 许可证文本快照
 
@@ -182,6 +182,6 @@
 - https://creativecommons.org/publicdomain/mark/1.0/ → `licenses/publicdomain-mark-1-0.html`
 - https://creativecommons.org/publicdomain/zero/1.0/ → `licenses/publicdomain-zero-1-0.html`
 
-## 产品内展示原则
+## 面向用户的署名
 
-App 频道卡片仅展示标题、创作者与简洁的“开放音乐”状态。完整署名可集中放在“设置 → 关于 → 开放内容与署名”，并随安装包或项目发行物附带本文；不得删除 CC BY / CC BY-SA 署名。
+频道卡片可只展示标题、创作者与简洁的“开放音乐”状态。完整署名集中显示在“设置 → 关于 → 开放内容与署名”，并随安装包或项目分发物提供本文；CC BY 与 CC BY-SA 要求的署名不得删除。

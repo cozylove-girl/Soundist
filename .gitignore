@@ -25,6 +25,7 @@ keystore.properties
 releases/
 *.apk
 *.aab
+RELEASE_CHECKLIST.md
 target-codex-*/
 ui*.xml
 *.log

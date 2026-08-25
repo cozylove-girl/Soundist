@@ -60,8 +60,6 @@ cd Soundist
 .\gradlew.bat :app:assembleDebug
 ```
 
-发布前检查见 [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)。
-
 </details>
 
 ## 从 Moodist 出发
