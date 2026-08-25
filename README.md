@@ -5,6 +5,8 @@
   <p><em>A place to stay, made of sound.</em></p>
   <p>
     <a href="https://github.com/cozylove-girl/Soundist/releases/latest"><strong>下载 Android 版</strong></a>
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    <a href="https://ifdian.net/a/luna4work"><strong>在爱发电支持</strong></a>
   </p>
   <p><sub>前往最新 Release，下载 APK 后即可安装</sub></p>
 </div>
