@@ -82,6 +82,12 @@ Soundist 最初受到 [Moodist](https://github.com/remvze/moodist) 的启发，�
 
 参与之前请阅读 [贡献指南](CONTRIBUTING.md)。安全问题请通过 [安全报告流程](SECURITY.md) 私下提交；关于本地数据、权限与联网行为，参见 [隐私说明](PRIVACY.md)。
 
+## 支持 Soundist
+
+如果 Soundist 曾陪你度过一段安静的时间，也可以在 [爱发电](https://ifdian.net/a/luna4work) 支持它继续生长。
+
+你的支持会用于声音整理、设备适配与后续维护。无论是否赞助，Soundist 的现有功能都不会因此受到限制。
+
 ## 许可
 
 Soundist 源码公开，并欢迎非商业使用与共同改进，但不允许未经授权的商业复制。由于采用非商业许可，Soundist 属于 source-available 软件，而不是 OSI 定义下的开源软件。
