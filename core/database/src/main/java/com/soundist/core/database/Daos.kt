@@ -73,6 +73,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao interface RecordsDao {
     @Query("SELECT * FROM playback_events ORDER BY startedAt DESC") fun observePlaybackEvents(): Flow<List<PlaybackEventEntity>>
     @Upsert suspend fun savePlaybackEvent(value: PlaybackEventEntity)
+    @Upsert suspend fun savePlaybackEvents(values: List<PlaybackEventEntity>)
 }
 
 @Dao interface CustomRadioFileDao {

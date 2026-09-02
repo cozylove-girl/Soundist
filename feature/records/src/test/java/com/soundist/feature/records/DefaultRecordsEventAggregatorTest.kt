@@ -167,6 +167,52 @@ class DefaultRecordsEventAggregatorTest {
         assertEquals(50, relation.completion)
     }
 
+    @Test fun standaloneAmbientPlaybackUsesRealPlaybackDuration() {
+        val result = aggregator.aggregate(
+            RecordsEvents(sounds = listOf(SoundUsageEvent("sound", "river", "河流", "自然", now - 90_000, 1, durationSeconds = 90))),
+            RecordsQuery(range = StatsRange.TODAY),
+            now,
+        )
+
+        assertEquals(90L, result.ambientSeconds)
+        assertEquals(90L, result.sounds.single().seconds)
+        assertTrue(result.selectedFocus.isEmpty())
+    }
+
+    @Test fun sleepAndPlaybackRespectSelectedRange() {
+        val old = now - 10 * 24 * 60 * 60 * 1000L
+        val result = aggregator.aggregate(
+            RecordsEvents(
+                sounds = listOf(
+                    SoundUsageEvent("today", "rain", "小雨", "雨声", now - 60_000, 1),
+                    SoundUsageEvent("old", "wind", "微风", "自然", old, 20),
+                ),
+                sleeps = listOf(
+                    SleepEvent("today", now - 60_000, 30, SleepTarget.ALL, 5, SleepStatus.COMPLETED),
+                    SleepEvent("old", old, 60, SleepTarget.ALL, 5, SleepStatus.COMPLETED),
+                ),
+            ),
+            RecordsQuery(range = StatsRange.TODAY),
+            now,
+        )
+
+        assertEquals(listOf("today"), result.selectedSounds.map { it.id })
+        assertEquals(listOf("today"), result.selectedSleeps.map { it.id })
+    }
+
+    @Test fun customDailyAverageUsesWholeRangeBeyondThirtyOneDays() {
+        val start = java.time.LocalDate.of(2026, 6, 1)
+        val end = java.time.LocalDate.of(2026, 8, 13)
+        val result = aggregator.aggregate(
+            RecordsEvents(focus = listOf(focus("session", FocusTargetKind.FREE, "自由专注", 74))),
+            RecordsQuery(range = StatsRange.CUSTOM, customStart = start, customEnd = end),
+            now,
+        )
+
+        assertEquals(1, result.dailyAverageMinutes)
+        assertEquals(74, result.activityDays.size)
+    }
+
     private fun focus(id: String, kind: FocusTargetKind, name: String, minutes: Int) = FocusEvent(
         id, kind, id, name, now - 60_000, minutes, SessionStatus.COMPLETED,
     )

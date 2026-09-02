@@ -292,4 +292,7 @@ interface RecordsRepository {
     fun observeSleepSessions(): Flow<List<SleepSession>>
     fun observePlaybackEvents(): Flow<List<PlaybackEvent>>
     suspend fun savePlaybackEvent(event: PlaybackEvent)
+    suspend fun savePlaybackEvents(events: List<PlaybackEvent>) {
+        events.forEach { savePlaybackEvent(it) }
+    }
 }

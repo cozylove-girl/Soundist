@@ -242,6 +242,7 @@ class Media3ListeningAudioController(
                         mixer.play(0f)
                         engine.publishAmbientGraphPlaying(mixer.playing)
                     }
+                    if (ambientMixer.playing) beginAmbientEvents(lastAmbientTracks.keys)
                 }
             }
 
@@ -252,6 +253,7 @@ class Media3ListeningAudioController(
                         engine.publishAmbientGraphPlaying(false)
                         if (ambientMixer is MiniaudioAmbientMixer) engine.releaseSessionFocus()
                     }
+                    closeAllAmbientEvents("paused")
                 }
             }
         }
@@ -292,6 +294,14 @@ class Media3ListeningAudioController(
                 }
             }
         }
+        // Records 页面需要看到仍在播放的会话。每秒只做一次 Room 批量 upsert，
+        // 不让 UI 轮询音频引擎，也不把音量拖动变成数据库写入。
+        radioEventScope.launch {
+            while (true) {
+                checkpointPlaybackEvents()
+                delay(1_000)
+            }
+        }
         // 环境声后端的中断协调（miniaudio 需要；Media3 环境声由引擎内部处理焦点）。
         // AudioFocus 属于整个 Soundist 会话：焦点丢失/拔耳机时暂停当前 ambient backend，
         // transient loss 记录恢复意图，GAIN 时仅按意图恢复。
@@ -302,6 +312,7 @@ class Media3ListeningAudioController(
                     ambientCommandMutex.withLock {
                         if (ambientMixer is MiniaudioAmbientMixer) ambientMixer.pause(0f)
                     }
+                    closeAllAmbientEvents("interrupted")
                 }
             }
             override fun onFocusLossTransient() {
@@ -312,6 +323,7 @@ class Media3ListeningAudioController(
                             ambientMixer.pause(0f)
                         }
                     }
+                    closeAllAmbientEvents("interrupted")
                 }
             }
             override fun onFocusGain() {
@@ -322,6 +334,7 @@ class Media3ListeningAudioController(
                             ambientMixer.play(0f)
                         }
                     }
+                    if (ambientMixer.playing) beginAmbientEvents(lastAmbientTracks.keys)
                 }
             }
             override fun onBecomingNoisy() {
@@ -330,6 +343,7 @@ class Media3ListeningAudioController(
                     ambientCommandMutex.withLock {
                         if (ambientMixer is MiniaudioAmbientMixer) ambientMixer.pause(0f)
                     }
+                    closeAllAmbientEvents("interrupted")
                 }
             }
         }
@@ -419,11 +433,7 @@ class Media3ListeningAudioController(
                 }
                 engine.publishAmbientGraphPlaying(true)
                 startBackgroundServiceIfEnabled()
-                enabledIds.forEach { id -> if (id !in ambientEvents) {
-                    val event = newPlaybackEvent(PlaybackKind.AMBIENT, id)
-                    ambientEvents[id] = event
-                    records.savePlaybackEvent(event)
-                } }
+                beginAmbientEvents(enabledIds)
                 ambientEvents.keys.filterNot(enabledIds::contains).toList().forEach { closeAmbientEvent(it) }
             } else {
                 if (backendWasPlaying) {
@@ -661,12 +671,43 @@ class Media3ListeningAudioController(
         startedAt = System.currentTimeMillis(), endedAt = null, activeSeconds = 0, completed = false,
         trackId = trackId, sourceKind = sourceKind,
     )
+
+    private suspend fun checkpointPlaybackEvents() {
+        val now = System.currentTimeMillis()
+        val snapshots = buildList {
+            ambientEvents.values.forEach { event ->
+                val elapsed = (now - event.startedAt).coerceAtLeast(0L)
+                add(event.copy(activeSeconds = elapsed / 1_000L, listenedMs = elapsed))
+            }
+            radioEvent?.let { event ->
+                val elapsed = radioListenedMs + ((radioSegmentResumedAt?.let { now - it } ?: 0L).coerceAtLeast(0L))
+                add(event.copy(activeSeconds = elapsed / 1_000L, listenedMs = elapsed))
+            }
+        }
+        records.savePlaybackEvents(snapshots)
+    }
+
+    private suspend fun beginAmbientEvents(ids: Collection<String>) {
+        ids.forEach { id -> if (id !in ambientEvents) {
+            val event = newPlaybackEvent(PlaybackKind.AMBIENT, id)
+            ambientEvents[id] = event
+            records.savePlaybackEvent(event)
+        } }
+    }
+
+    private suspend fun closeAllAmbientEvents(reason: String) {
+        ambientEvents.keys.toList().forEach { id ->
+            ambientEvents.remove(id)?.let { records.savePlaybackEvent(it.closed(reason)) }
+        }
+    }
     private suspend fun closeAmbientEvent(id: String) = ambientEvents.remove(id)?.let { records.savePlaybackEvent(it.closed("stopped")) } ?: Unit
 
     /** 电台会话开始/续播：同一频道跨暂停复用同一事件；切换频道/停止/错误/播完才结束。 */
     private suspend fun beginRadioEvent(station: FeatureRadioStation, trackId: String?, sourceKind: String?) {
         if (radioEvent != null) {
             radioSegmentResumedAt = System.currentTimeMillis()
+            radioEvent = radioEvent?.copy(completionReason = null)
+            records.savePlaybackEvent(requireNotNull(radioEvent))
             return
         }
         radioEvent = newPlaybackEvent(
@@ -685,7 +726,11 @@ class Media3ListeningAudioController(
         val resumedAt = radioSegmentResumedAt ?: return
         radioListenedMs += (System.currentTimeMillis() - resumedAt).coerceAtLeast(0L)
         radioSegmentResumedAt = null
-        radioEvent?.let { event -> records.savePlaybackEvent(event.copy(listenedMs = radioListenedMs)) }
+        radioEvent?.let { event ->
+            val paused = event.copy(activeSeconds = radioListenedMs / 1_000L, listenedMs = radioListenedMs, completionReason = "paused")
+            radioEvent = paused
+            records.savePlaybackEvent(paused)
+        }
     }
 
     /** 结束电台会话（停止/切频道/错误/播完）。 */

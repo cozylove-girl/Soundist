@@ -155,6 +155,12 @@ class RoomRecordsRepository(private val db: SoundistDatabase) : RecordsRepositor
     override fun observeSleepSessions() = db.productivity().observeSleepSessions().map { rows -> rows.map(::sleepSession) }
     override fun observePlaybackEvents() = db.records().observePlaybackEvents().map { rows -> rows.map { PlaybackEvent(it.id, PlaybackKind.valueOf(it.kind), it.sourceId, it.startedAt, it.endedAt, it.activeSeconds, it.completed, it.trackId, it.sourceKind, it.listenedMs, it.completionReason) } }
     override suspend fun savePlaybackEvent(event: PlaybackEvent) = db.records().savePlaybackEvent(PlaybackEventEntity(event.id, event.kind.name, event.sourceId, event.startedAt, event.endedAt, event.activeSeconds, event.completed, event.trackId, event.sourceKind, event.listenedMs, event.completionReason))
+    override suspend fun savePlaybackEvents(events: List<PlaybackEvent>) {
+        if (events.isEmpty()) return
+        db.records().savePlaybackEvents(events.map { event ->
+            PlaybackEventEntity(event.id, event.kind.name, event.sourceId, event.startedAt, event.endedAt, event.activeSeconds, event.completed, event.trackId, event.sourceKind, event.listenedMs, event.completionReason)
+        })
+    }
 }
 
 /** Custom radio channel audio-file persistence bridge (user-imported local audio for custom stations). */
