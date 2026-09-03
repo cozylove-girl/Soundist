@@ -31,5 +31,5 @@ dependencies {
     // ambient 84 声音资源映射测试使用 core/model 的权威 SoundCatalog（assetUri 由引擎实际消费）。
     testImplementation(project(":core:model"))
     debugImplementation(libs.androidx.compose.ui.tooling)
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }
