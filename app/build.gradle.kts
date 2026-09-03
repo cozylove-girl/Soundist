@@ -21,8 +21,8 @@ android {
         applicationId = "com.soundist.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SUPABASE_URL", "\"${providers.gradleProperty("SOUNDIST_SUPABASE_URL").orNull ?: ""}\"")
         // 环境声 miniaudio 后端开关（阶段 B）：默认 false=Media3 安全回退；真机验收前保持关闭。
@@ -76,6 +76,14 @@ android {
     }
     androidResources { noCompress += "opus" }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("Soundist-v1.0.1-release.apk")
+        }
+    }
 }
 
 dependencies {
