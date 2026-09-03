@@ -256,9 +256,16 @@ data class RadioRank(val name: String, val genre: String, val minutes: Int, val 
 data class SoundRelation(val name: String, val minutes: Int, val sessions: Int, val targetCount: Int, val completion: Int)
 data class ContextMoment(val label: String, val sounds: List<String>, val percentage: Int)
 data class DurationBucket(val label: String, val count: Int)
-data class TimeBucket(val label: String, val count: Int)
+data class TimeBucket(val label: String, val minutes: Int)
 data class ActivityDay(val date: LocalDate, val focusMinutes: Int, val audioSeconds: Long)
 data class SoundCombination(val names: List<String>, val seconds: Long)
+data class FocusTimelineSegment(
+    val id: String,
+    val label: String,
+    val startedAt: Long,
+    val endedAt: Long,
+    val status: SessionStatus,
+)
 
 data class RecordsState(
     val query: RecordsQuery = RecordsQuery(),
@@ -290,7 +297,7 @@ data class RecordsState(
     val radioWeekdayMinutes: List<Int> = List(7) { 0 },
     val durationBuckets: List<DurationBucket> = emptyList(),
     val timeBuckets: List<TimeBucket> = emptyList(),
-    val focusHourlyMinutes: List<Int> = List(24) { 0 },
+    val focusTimeline: List<FocusTimelineSegment> = emptyList(),
     val activityDays: List<ActivityDay> = emptyList(),
     val sleepRoutineCount: Int = 0,
     val loadStatus: RecordsLoadStatus = RecordsLoadStatus.READY,
@@ -338,7 +345,10 @@ class DefaultRecordsEventAggregator(private val zoneId: ZoneId = ZoneId.systemDe
             return totalMillis / 1_000L
         }
 
-        val focus = events.focus.filter { inRange(it.startedAt) }.sortedByDescending { it.startedAt }
+        val focus = events.focus.filter { session ->
+            val sessionEnd = session.startedAt + session.minutes.coerceAtLeast(0) * 60_000L
+            session.startedAt < endMillis + 1 && sessionEnd > startMillis
+        }.sortedByDescending { it.startedAt }
         val sounds = events.sounds.mapNotNull { event ->
             clip(event.startedAt, event.durationSeconds)?.let { (clippedStart, clippedEnd) ->
                 val seconds = (clippedEnd - clippedStart) / 1_000L
@@ -381,7 +391,11 @@ class DefaultRecordsEventAggregator(private val zoneId: ZoneId = ZoneId.systemDe
                 sounds.forEach { clipToWindow(it.startedAt, it.durationSeconds, dayStart, dayEnd)?.let(::add) }
                 radios.forEach { clipToWindow(it.startedAt, it.durationSeconds, dayStart, dayEnd)?.let(::add) }
             }
-            ActivityDay(date, focus.filter { it.startedAt.localDate() == date }.sumOf { it.minutes }, unionSeconds(audioIntervals))
+            val focusMinutes = focus.sumOf { session ->
+                val sessionEnd = session.startedAt + session.minutes.coerceAtLeast(0) * 60_000L
+                ((minOf(sessionEnd, dayEnd) - maxOf(session.startedAt, dayStart)).coerceAtLeast(0L) / 60_000L).toInt()
+            }
+            ActivityDay(date, focusMinutes, unionSeconds(audioIntervals))
         }
         val trendGroups = if (activityDays.size <= 31) activityDays.map(::listOf) else {
             val chunkSize = ceil(activityDays.size / 31.0).toInt()
@@ -454,11 +468,31 @@ class DefaultRecordsEventAggregator(private val zoneId: ZoneId = ZoneId.systemDe
             DurationBucket("<25", focus.count { it.minutes < 25 }), DurationBucket("25-44", focus.count { it.minutes in 25..44 }),
             DurationBucket("45-59", focus.count { it.minutes in 45..59 }), DurationBucket("60+", focus.count { it.minutes >= 60 }),
         )
+        fun overlapMinutes(startAt: Long, endAt: Long, windowStart: Long, windowEnd: Long): Int =
+            ((minOf(endAt, windowEnd) - maxOf(startAt, windowStart)).coerceAtLeast(0L) / 60_000L).toInt()
         val timeBuckets = listOf(
-            TimeBucket("清晨", focus.count { it.startedAt.hour() < 8 }), TimeBucket("上午", focus.count { it.startedAt.hour() in 8..11 }),
-            TimeBucket("下午", focus.count { it.startedAt.hour() in 12..17 }), TimeBucket("夜间", focus.count { it.startedAt.hour() >= 18 }),
-        )
-        val focusHourlyMinutes = (0..23).map { hour -> focus.filter { it.startedAt.hour() == hour }.sumOf { it.minutes } }
+            "清晨" to 0..7,
+            "上午" to 8..11,
+            "下午" to 12..17,
+            "夜间" to 18..23,
+        ).map { (label, hours) ->
+            val minutes = focus.sumOf { session ->
+                val sessionEnd = session.startedAt + session.minutes.coerceAtLeast(0) * 60_000L
+                activityDays.sumOf { day ->
+                    hours.sumOf { hour ->
+                        val hourStart = day.date.atStartOfDay(zoneId).plusHours(hour.toLong()).toInstant().toEpochMilli()
+                        overlapMinutes(session.startedAt, sessionEnd, hourStart, hourStart + 3_600_000L)
+                    }
+                }
+            }
+            TimeBucket(label, minutes)
+        }
+        val focusTimeline = focus.mapNotNull { session ->
+            val sessionEnd = session.startedAt + session.minutes.coerceAtLeast(0) * 60_000L
+            val clippedStart = maxOf(session.startedAt, startMillis)
+            val clippedEnd = minOf(sessionEnd, endMillis + 1)
+            if (clippedEnd <= clippedStart) null else FocusTimelineSegment(session.id, session.targetName, clippedStart, clippedEnd, session.status)
+        }
         val rangeLabel = when (query.range) {
             StatsRange.TODAY -> today.format(DateTimeFormatter.ISO_LOCAL_DATE)
             StatsRange.LAST_7_DAYS -> "最近 7 天"
@@ -476,7 +510,7 @@ class DefaultRecordsEventAggregator(private val zoneId: ZoneId = ZoneId.systemDe
             radioSeconds = unionSeconds(radios.map { it.startedAt to (it.startedAt + it.durationSeconds * 1_000L) }),
             audioSeconds = unionSeconds((sounds.map { it.startedAt to (it.startedAt + it.durationSeconds * 1_000L) } + radios.map { it.startedAt to (it.startedAt + it.durationSeconds * 1_000L) })),
             activePlaybackCount = sounds.count { it.active } + radios.count { it.active },
-            radioWeekdayMinutes = radioWeekdayMinutes, durationBuckets = durationBuckets, timeBuckets = timeBuckets, focusHourlyMinutes = focusHourlyMinutes,
+            radioWeekdayMinutes = radioWeekdayMinutes, durationBuckets = durationBuckets, timeBuckets = timeBuckets, focusTimeline = focusTimeline,
             activityDays = activityDays, sleepRoutineCount = events.savedSleepRoutineCount,
         )
     }
@@ -587,8 +621,8 @@ internal const val RECORDS_PAGE_BOTTOM_INSET_DP = 104
         recordItem { Summary(state) }
         if (state.activePlaybackCount > 0) recordItem { LiveRecording(state) }
         if (state.query.view == StatsView.OVERVIEW) {
+            recordItem { RangeRhythm(state, vm) }
             recordItem { Insight(state.insight) }
-            recordItem { TrendCard(state, vm) }
             recordItem { AudioOverview(state) }
             state.selectedFocus.firstOrNull()?.let { event -> recordItem { ReplayCard(event, state) } }
         } else {
@@ -596,10 +630,10 @@ internal const val RECORDS_PAGE_BOTTOM_INSET_DP = 104
             when (state.query.detail) {
                 DetailSection.FOCUS -> {
                     recordItem { FocusPieCard(state) }
+                    recordItem { ActivityDistribution(state) }
                     recordItem { CompletionCard(state) }
                     recordItem { BarBlock("专注长度", "每次投入落在哪个区间", state.durationBuckets.map { it.label to it.count }, ChartGreen, "会话次数") }
-                    recordItem { TimeOfDay(state.timeBuckets.map { it.label to it.count }, state.rangeLabel) }
-                    recordItem { ActivityDistribution(state) }
+                    recordItem { TimeOfDay(state.timeBuckets, state.rangeLabel) }
                     recordItem { RecentFocus(state.selectedFocus, state.selectedSounds, state.selectedRadios) }
                 }
                 DetailSection.SOUNDS -> {
@@ -618,7 +652,7 @@ internal const val RECORDS_PAGE_BOTTOM_INSET_DP = 104
                 DetailSection.SLEEP -> recordItem { SleepReview(state) }
             }
         }
-        recordItem { Text("这些不是冷冰冰的数据，\n而是你和声音一起待过的时间。", Modifier.fillMaxWidth().padding(vertical = 10.dp), color = Muted, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Serif), textAlign = TextAlign.Center) }
+        recordItem { Text("时间没有消失，\n它只是变成了回声。", Modifier.fillMaxWidth().padding(vertical = 14.dp), color = Muted, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Serif), textAlign = TextAlign.Center) }
     }
 }
 
@@ -686,7 +720,7 @@ private fun LazyListScope.recordItem(content: @Composable () -> Unit) {
 
 @Composable private fun Summary(state: RecordsState) {
     SectionBorder {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Column { Text("这段时间", fontWeight = FontWeight.Medium, color = Primary); Text(state.rangeLabel, style = MaterialTheme.typography.labelSmall, color = Muted) }; Text(state.query.range.label, style = MaterialTheme.typography.labelSmall, color = Secondary) }
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Column { Text("这一段回声", style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif), color = Primary); Text(state.rangeLabel, Modifier.padding(top = 3.dp), style = MaterialTheme.typography.labelSmall, color = Muted) }; Text(state.query.range.label, style = MaterialTheme.typography.labelSmall, color = Secondary) }
         Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
             Metric("次数", state.selectedFocus.size.toString(), "次", Modifier.weight(1f)); Metric("时长", metricValue(state.totalMinutes), metricUnit(state.totalMinutes), Modifier.weight(1f)); Metric("日均", metricValue(state.dailyAverageMinutes), "${metricUnit(state.dailyAverageMinutes)}/日", Modifier.weight(1f))
         }
@@ -703,9 +737,9 @@ private fun LazyListScope.recordItem(content: @Composable () -> Unit) {
 @Composable private fun AudioOverview(state: RecordsState) {
     SectionBorder {
         Text("声音陪伴", fontWeight = FontWeight.Medium, color = Primary)
-        Text("${state.rangeLabel} · 按实际播放时间统计", style = MaterialTheme.typography.labelSmall, color = Muted)
+        Text("${state.rangeLabel} · 已播放的声音", style = MaterialTheme.typography.labelSmall, color = Muted)
         Row(Modifier.fillMaxWidth().padding(top = 14.dp)) {
-            Metric("声音播放", formatCompactDuration(state.audioSeconds), "", Modifier.weight(1f))
+            Metric("总播放", formatCompactDuration(state.audioSeconds), "", Modifier.weight(1f))
             Metric("环境声", formatCompactDuration(state.ambientSeconds), "", Modifier.weight(1f))
             Metric("电台", formatCompactDuration(state.radioSeconds), "", Modifier.weight(1f))
         }
@@ -729,13 +763,13 @@ private fun LazyListScope.recordItem(content: @Composable () -> Unit) {
     }
 }
 
-@Composable private fun Insight(text: String) { Row(Modifier.fillMaxWidth().background(Ambient.copy(alpha = .05f)).drawBehind { drawLine(Ambient.copy(alpha = .45f), Offset.Zero, Offset(0f, size.height), 2.dp.toPx()) }.padding(horizontal = 12.dp, vertical = 10.dp)) { Icon(trendingUp, null, Modifier.size(16.dp), tint = AmbientLight); Column(Modifier.padding(start = 12.dp)) { Text("这一段时间的回声", style = MaterialTheme.typography.labelLarge, color = Primary); Text(text, style = MaterialTheme.typography.labelSmall, color = Secondary) } } }
+@Composable private fun Insight(text: String) { Row(Modifier.fillMaxWidth().background(Ambient.copy(alpha = .045f), MaterialTheme.shapes.small).padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.Top) { Icon(trendingUp, null, Modifier.size(16.dp), tint = AmbientLight); Text(text, Modifier.padding(start = 10.dp), style = MaterialTheme.typography.bodySmall, color = Secondary) } }
 
 @Composable private fun FocusPieCard(state: RecordsState) {
     CardBlock {
-        Text("专注时长分布", fontWeight = FontWeight.Medium, color = Primary); Text("${state.rangeLabel} · 仅待办专注与自由专注", Modifier.padding(top = 4.dp, bottom = 16.dp), style = MaterialTheme.typography.labelSmall, color = Muted)
-        if (state.pie.isEmpty()) Box(Modifier.fillMaxWidth().height(256.dp), contentAlignment = Alignment.Center) { Text("完成一次专注后，\n这里会形成时长分布。", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = Muted) }
-        else SolidPieWithLabels(state.pie, Modifier.fillMaxWidth().height(380.dp))
+        Text("专注构成", fontWeight = FontWeight.Medium, color = Primary); Text("${state.rangeLabel} · 待办专注与自由专注", Modifier.padding(top = 4.dp, bottom = 16.dp), style = MaterialTheme.typography.labelSmall, color = Muted)
+        if (state.pie.isEmpty()) Box(Modifier.fillMaxWidth().height(230.dp), contentAlignment = Alignment.Center) { Text("完成一次专注后，\n这里会形成时长分布。", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = Muted) }
+        else SolidPieWithLabels(state.pie, Modifier.fillMaxWidth().height(304.dp))
         val countedSessions = state.selectedFocus.count { it.targetKind == FocusTargetKind.TODO || it.targetKind == FocusTargetKind.FREE }
         Text("共 $countedSessions 次 · ${formatMinutes(state.pie.sumOf { it.minutes })}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge, color = Primary)
         if (state.fullPie.isNotEmpty()) {
@@ -822,8 +856,14 @@ internal fun resolvePieLabelPlacements(percentages: List<Float>, height: Float, 
 }
 
 @Composable private fun TrendCard(state: RecordsState, vm: RecordsViewModel) {
-    Column(Modifier.fillMaxWidth().border(1.dp, BorderColor, MaterialTheme.shapes.large).background(Brush.linearGradient(listOf(SurfaceHigh, SurfaceColor)), MaterialTheme.shapes.large).padding(16.dp)) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) { Column { Text("时间趋势", fontWeight = FontWeight.Medium, color = Primary); Text("${state.rangeLabel} · ${if (state.query.trendMetric == TrendMetric.FOCUS) "专注时长" else "实际播放"}", Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelSmall, color = Muted) }; Row(Modifier.border(1.dp, BorderColor, MaterialTheme.shapes.medium).background(SurfaceColor, MaterialTheme.shapes.medium).padding(2.dp)) { TrendMetric.entries.forEach { metric -> TrendMetricButton(if (metric == TrendMetric.FOCUS) "专注" else "声音播放", state.query.trendMetric == metric) { vm.setTrend(metric) } } } }
+    val title = when (state.query.range) {
+        StatsRange.LAST_7_DAYS -> "七日节律"
+        StatsRange.MONTH -> "本月足迹"
+        StatsRange.CUSTOM -> "时间的潮汐"
+        StatsRange.TODAY -> "今天留下的时间"
+    }
+    Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(SurfaceHigh.copy(alpha = .9f), SurfaceColor)), MaterialTheme.shapes.medium).padding(16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(title, fontWeight = FontWeight.Medium, color = Primary); Text("${state.rangeLabel} · ${if (state.query.trendMetric == TrendMetric.FOCUS) "专注时长" else "实际播放"}", Modifier.padding(top = 2.dp), style = MaterialTheme.typography.labelSmall, color = Muted) }; Row(Modifier.background(CanvasColor.copy(alpha = .55f), MaterialTheme.shapes.small).padding(2.dp)) { TrendMetric.entries.forEach { metric -> TrendMetricButton(if (metric == TrendMetric.FOCUS) "专注" else "声音", state.query.trendMetric == metric) { vm.setTrend(metric) } } } }
         TrendChart(state.trend, state.query.trendMetric, Modifier.fillMaxWidth().height(110.dp))
     }
 }
@@ -836,10 +876,10 @@ internal fun resolvePieLabelPlacements(percentages: List<Float>, height: Float, 
 
 @Composable private fun TrendChart(values: List<TrendPoint>, metric: TrendMetric, modifier: Modifier) {
     val amounts = values.map { if (metric == TrendMetric.FOCUS) it.focusHours else it.audioHours }
-    val maxValue = amounts.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+    val maxValue = niceTrendAxisMax(amounts.maxOrNull() ?: 0f)
     var selectedIndex by remember(metric, values) { mutableStateOf<Int?>(null) }
-    val semanticText = selectedIndex?.let { index -> values.getOrNull(index)?.let { "${it.label}，${formatHourValue(amounts[index])}小时" } }
-        ?: "共${values.size}个数据点，最大值${formatHourValue(amounts.maxOrNull() ?: 0f)}小时。点击图表可查看数据点"
+    val semanticText = selectedIndex?.let { index -> values.getOrNull(index)?.let { "${it.label}，${formatTrendAmount(amounts[index])}" } }
+        ?: "共${values.size}个数据点，最大值${formatTrendAmount(amounts.maxOrNull() ?: 0f)}。点击图表可查看数据点"
     Column(modifier) {
         Canvas(
             Modifier.weight(1f).fillMaxWidth()
@@ -872,30 +912,39 @@ internal fun resolvePieLabelPlacements(percentages: List<Float>, height: Float, 
             (0..4).forEach { level ->
                 val fraction = level / 4f
                 val y = plotBottom - plotHeight * fraction
-                drawContext.canvas.nativeCanvas.drawText(formatHourValue(maxValue * fraction), plotLeft - 6.dp.toPx(), y + labelPaint.textSize * .35f, labelPaint)
+                drawContext.canvas.nativeCanvas.drawText(formatTrendAxisLabel(maxValue * fraction), plotLeft - 6.dp.toPx(), y + labelPaint.textSize * .35f, labelPaint)
             }
             val step = (plotRight - plotLeft) / (values.size - 1).coerceAtLeast(1)
             val points = amounts.mapIndexed { index, amount -> Offset(plotLeft + index * step, plotBottom - amount * plotHeight / maxValue) }
-            if (points.isNotEmpty()) {
+            val discrete = values.size in 1..14
+            if (discrete) {
+                val barWidth = ((plotRight - plotLeft) / values.size.coerceAtLeast(1) * .56f).coerceIn(5.dp.toPx(), 20.dp.toPx())
+                points.forEachIndexed { index, point ->
+                    val height = (plotBottom - point.y).coerceAtLeast(if (amounts[index] > 0f) 2.dp.toPx() else 0f)
+                    val left = point.x - barWidth / 2f
+                    drawRoundRect(accent.copy(alpha = if (selectedIndex == index) .88f else .58f), Offset(left, plotBottom - height), Size(barWidth, height), CornerRadius(3.dp.toPx()))
+                    if (selectedIndex == index && height > 0f) drawRoundRect(Primary.copy(alpha = .82f), Offset(left, plotBottom - height), Size(barWidth, height), CornerRadius(3.dp.toPx()), style = Stroke(1.4.dp.toPx()))
+                }
+            } else if (points.isNotEmpty()) {
                 val area = Path().apply {
                     moveTo(points.first().x, plotBottom)
                     lineTo(points.first().x, points.first().y)
-                    appendSmoothTrend(points)
+                    points.drop(1).forEach { lineTo(it.x, it.y) }
                     lineTo(points.last().x, plotBottom)
                     close()
                 }
                 drawPath(area, Brush.verticalGradient(listOf(accent.copy(alpha = areaAlpha), accent.copy(alpha = 0f)), plotTop, plotBottom))
-                val line = Path().apply { moveTo(points.first().x, points.first().y); appendSmoothTrend(points) }
+                val line = Path().apply { moveTo(points.first().x, points.first().y); points.drop(1).forEach { lineTo(it.x, it.y) } }
                 drawPath(line, accent, style = Stroke(1.8.dp.toPx(), cap = StrokeCap.Round))
             }
-            points.forEachIndexed { index, point ->
+            if (!discrete) points.forEachIndexed { index, point ->
                 drawCircle(if (selectedIndex == index) Primary else accent, if (selectedIndex == index) 5.dp.toPx() else 3.dp.toPx(), point)
                 if (selectedIndex == index) drawCircle(accent, 8.dp.toPx(), point, style = Stroke(2.dp.toPx()))
             }
             selectedIndex?.takeIf { it in points.indices }?.let { index ->
                 val point = points[index]
                 drawLine(Ambient.copy(alpha = .15f), Offset(point.x, plotTop), Offset(point.x, plotBottom), 1.dp.toPx())
-                val text = "${values[index].label} · ${formatHourValue(amounts[index])}"
+                val text = "${values[index].label} · ${formatTrendAmount(amounts[index])}"
                 val tooltipPaint = NativePaint(NativePaint.ANTI_ALIAS_FLAG).apply { color = 0xFFE9ECE9.toInt(); textSize = 10.sp.toPx() }
                 val tooltipWidth = (tooltipPaint.measureText(text) + 16.dp.toPx()).coerceAtMost(size.width - 8.dp.toPx())
                 val tooltipHeight = tooltipPaint.textSize + 12.dp.toPx()
@@ -911,10 +960,18 @@ internal fun resolvePieLabelPlacements(percentages: List<Float>, height: Float, 
     }
 }
 
-private fun Path.appendSmoothTrend(points: List<Offset>) {
-    points.zipWithNext().forEach { (from, to) ->
-        val midpointX = (from.x + to.x) / 2f
-        cubicTo(midpointX, from.y, midpointX, to.y, to.x, to.y)
+internal fun niceTrendAxisMax(value: Float): Float {
+    if (value <= 0f) return .25f
+    return when {
+        value <= .25f -> .25f
+        value <= .5f -> .5f
+        value <= .75f -> .75f
+        value <= 1f -> 1f
+        value <= 1.5f -> 1.5f
+        value <= 2f -> 2f
+        value <= 3f -> 3f
+        value <= 4f -> 4f
+        else -> ceil(value / 2f) * 2f
     }
 }
 
@@ -967,7 +1024,7 @@ internal fun nearestTrendPointIndex(tapX: Float, width: Float, count: Int, plotL
 }
 
 @Composable private fun CompletionCard(state: RecordsState) {
-    CardBlock {
+    SectionBorder {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) { Column { Text("完成情况", fontWeight = FontWeight.Medium, color = Primary); Text("完成与中断分开记录", style = MaterialTheme.typography.labelSmall, color = Muted) }; Text("${state.completionRate}%", style = MaterialTheme.typography.headlineSmall, color = AmbientLight, fontFamily = FontFamily.Monospace) }
         LinearProgressIndicator({ state.completionRate / 100f }, Modifier.fillMaxWidth().padding(top = 12.dp).height(8.dp), color = Ambient, trackColor = SurfaceHigh)
         Row(Modifier.fillMaxWidth().padding(top = 7.dp), Arrangement.SpaceBetween) { Text("完成 ${state.completedCount} 次", style = MaterialTheme.typography.labelSmall, color = Secondary); Text("中断 ${state.selectedFocus.size - state.completedCount} 次", style = MaterialTheme.typography.labelSmall, color = Secondary) }
@@ -993,21 +1050,22 @@ internal fun nearestTrendPointIndex(tapX: Float, width: Float, count: Int, plotL
     }
 }
 
-@Composable private fun TimeOfDay(values: List<Pair<String, Int>>, rangeLabel: String) {
-    GradientCard {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Text("专注时段", fontWeight = FontWeight.Medium, color = Primary); Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = Secondary) }
-        val max = values.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+@Composable private fun TimeOfDay(values: List<TimeBucket>, rangeLabel: String) {
+    SectionBorder {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Text("时段分布", fontWeight = FontWeight.Medium, color = Primary); Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = Secondary) }
+        Text("按实际落在各时段的专注时长统计", Modifier.padding(top = 3.dp), style = MaterialTheme.typography.labelSmall, color = Muted)
+        val max = values.maxOfOrNull { it.minutes }?.coerceAtLeast(1) ?: 1
         Row(Modifier.fillMaxWidth().height(88.dp).padding(top = 12.dp), Arrangement.spacedBy(8.dp), Alignment.Bottom) {
-            values.forEach { (_, count) ->
+            values.forEach { bucket ->
                 Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                    Text(count.toString(), fontSize = 10.sp, lineHeight = 14.sp, color = Secondary, fontFamily = FontFamily.Monospace)
+                    Text(formatMinutes(bucket.minutes), fontSize = 10.sp, lineHeight = 14.sp, color = Secondary, fontFamily = FontFamily.Monospace)
                     Spacer(Modifier.height(5.dp))
-                    Box(Modifier.fillMaxWidth().height((52f * count / max).coerceAtLeast(5f).dp).background(Ambient.copy(alpha = .7f), androidx.compose.foundation.shape.RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)))
+                    Box(Modifier.fillMaxWidth().height((52f * bucket.minutes / max).coerceAtLeast(5f).dp).background(Ambient.copy(alpha = .7f), androidx.compose.foundation.shape.RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)))
                 }
             }
         }
         Row(Modifier.fillMaxWidth().padding(top = 7.dp), Arrangement.spacedBy(8.dp)) {
-            values.forEach { (label, _) -> Text(label, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 11.sp, lineHeight = 14.sp, color = Secondary) }
+            values.forEach { bucket -> Text(bucket.label, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 11.sp, lineHeight = 14.sp, color = Secondary) }
         }
     }
 }
@@ -1016,39 +1074,94 @@ internal fun nearestTrendPointIndex(tapX: Float, width: Float, count: Int, plotL
 
 @Composable private fun ActivityDistribution(state: RecordsState) {
     when {
-        state.query.range == StatsRange.TODAY -> HourlyDistribution(state.focusHourlyMinutes, state.rangeLabel)
-        state.activityDays.size <= 7 -> DayDistribution("近7天专注", state.activityDays)
-        state.activityDays.size <= 42 -> CalendarDistribution(if (state.query.range == StatsRange.MONTH) "本月专注日历" else "所选日期的专注分布", state.activityDays)
+        state.query.range == StatsRange.TODAY -> FocusDayTimeline(state.focusTimeline, state.rangeLabel)
+        state.activityDays.size <= 14 -> DayDistribution(state.rangeLabel, state.activityDays)
+        state.activityDays.size <= 42 -> CalendarDistribution(if (state.query.range == StatsRange.MONTH) "本月足迹" else "日间足迹", state.activityDays)
         else -> WeeklyDistribution(state.activityDays)
     }
 }
 
-@Composable private fun HourlyDistribution(values: List<Int>, rangeLabel: String) {
-    GradientCard {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Text("今日专注分布", fontWeight = FontWeight.Medium, color = Primary); Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = Muted) }
-        val max = values.maxOrNull()?.coerceAtLeast(1) ?: 1
-        Row(Modifier.fillMaxWidth().height(74.dp).padding(top = 14.dp), Arrangement.spacedBy(2.dp), Alignment.Bottom) {
-            values.forEach { value -> Box(Modifier.weight(1f).height((52f * value / max).coerceAtLeast(3f).dp).background(Ambient.copy(alpha = if (value > 0) .72f else .1f), MaterialTheme.shapes.extraSmall)) }
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 6.dp), Arrangement.SpaceBetween) { listOf("0时", "6时", "12时", "18时", "23时").forEach { Text(it, fontSize = 10.sp, color = Muted) } }
+@Composable private fun RangeRhythm(state: RecordsState, vm: RecordsViewModel) {
+    if (state.query.range == StatsRange.TODAY) FocusDayTimeline(state.focusTimeline, state.rangeLabel)
+    else TrendCard(state, vm)
+}
+
+internal data class TimelinePlacement(val segment: FocusTimelineSegment, val lane: Int)
+
+internal fun assignTimelineLanes(segments: List<FocusTimelineSegment>): List<TimelinePlacement> {
+    val laneEnds = mutableListOf<Long>()
+    return segments.sortedBy(FocusTimelineSegment::startedAt).map { segment ->
+        val available = laneEnds.indexOfFirst { it <= segment.startedAt }
+        val lane = if (available >= 0) available else laneEnds.size.also { laneEnds += Long.MIN_VALUE }
+        laneEnds[lane] = segment.endedAt
+        TimelinePlacement(segment, lane)
     }
 }
 
-@Composable private fun DayDistribution(title: String, days: List<ActivityDay>) {
+@Composable private fun FocusDayTimeline(segments: List<FocusTimelineSegment>, rangeLabel: String) {
+    val zone = ZoneId.systemDefault()
+    val dayStart = remember(segments) {
+        segments.minOfOrNull { it.startedAt }?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli() }
+            ?: LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+    }
+    val placements = remember(segments) { assignTimelineLanes(segments) }
+    val laneCount = (placements.maxOfOrNull(TimelinePlacement::lane) ?: 0) + 1
+    var selectedId by remember(segments) { mutableStateOf<String?>(segments.firstOrNull()?.id) }
     GradientCard {
-        Text(title, fontWeight = FontWeight.Medium, color = Primary)
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Column { Text("今天留下的时间", fontWeight = FontWeight.Medium, color = Primary); Text("轻触一段，查看它发生的时刻", Modifier.padding(top = 3.dp), style = MaterialTheme.typography.labelSmall, color = Muted) }; Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = Muted) }
+        if (segments.isEmpty()) {
+            Box(Modifier.fillMaxWidth().height(96.dp).padding(top = 12.dp), contentAlignment = Alignment.Center) { Text("今天还没有专注记录。\n时间会在这里留下痕迹。", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = Muted) }
+        } else Canvas(Modifier.fillMaxWidth().height((70 + (laneCount - 1).coerceAtMost(3) * 22).dp).padding(top = 14.dp).pointerInput(segments, dayStart) {
+            detectTapGestures { tap ->
+                val instant = dayStart + ((tap.x / size.width.coerceAtLeast(1)) * 86_400_000f).toLong()
+                selectedId = segments.minByOrNull { segment -> kotlin.math.abs((segment.startedAt + segment.endedAt) / 2L - instant) }?.id
+            }
+        }) {
+            val trackTop = 8.dp.toPx()
+            val visibleLanes = laneCount.coerceAtMost(4)
+            val trackHeight = (visibleLanes * 22 + 12).dp.toPx()
+            val hourWidth = size.width / 24f
+            (0 until 24 step 6).forEach { hour ->
+                drawRoundRect(SurfaceHigh.copy(alpha = .52f), Offset(hour * hourWidth, trackTop), Size(hourWidth * 6f - 2.dp.toPx(), trackHeight), CornerRadius(5.dp.toPx()))
+            }
+            val laneHeight = 14.dp.toPx()
+            placements.forEach { placement ->
+                val segment = placement.segment
+                val start = ((segment.startedAt - dayStart).toFloat() / 86_400_000f).coerceIn(0f, 1f)
+                val end = ((segment.endedAt - dayStart).toFloat() / 86_400_000f).coerceIn(start, 1f)
+                val x = size.width * start
+                val width = (size.width * (end - start)).coerceAtLeast(5.dp.toPx())
+                val lane = placement.lane.coerceAtMost(3)
+                val y = trackTop + 6.dp.toPx() + lane * 22.dp.toPx()
+                val color = if (segment.status == SessionStatus.COMPLETED) Ambient else Radio
+                drawRoundRect(color.copy(alpha = if (selectedId == segment.id) .95f else .68f), Offset(x, y), Size(width, laneHeight), CornerRadius(laneHeight / 2))
+                if (selectedId == segment.id) drawRoundRect(Primary.copy(alpha = .8f), Offset(x, y), Size(width, laneHeight), CornerRadius(laneHeight / 2), style = Stroke(1.5.dp.toPx()))
+                drawCircle(color.copy(alpha = .95f), 2.dp.toPx(), Offset(x, y + laneHeight / 2))
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 5.dp), Arrangement.SpaceBetween) { listOf("0时", "6时", "12时", "18时", "24时").forEach { Text(it, fontSize = 10.sp, color = Muted) } }
+        segments.firstOrNull { it.id == selectedId }?.let { segment ->
+            Text("${formatTimelineClock(segment.startedAt)}–${formatTimelineClock(segment.endedAt)} · ${segment.label} · ${formatMinutes(((segment.endedAt - segment.startedAt) / 60_000L).toInt())}", Modifier.fillMaxWidth().padding(top = 10.dp).background(CanvasColor.copy(alpha = .48f), MaterialTheme.shapes.small).padding(horizontal = 10.dp, vertical = 8.dp), style = MaterialTheme.typography.labelSmall, color = Primary)
+        }
+    }
+}
+
+@Composable private fun DayDistribution(rangeLabel: String, days: List<ActivityDay>) {
+    GradientCard {
+        val title = if (days.size <= 7) "七日节律" else "日间潮汐"
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Column { Text(title, fontWeight = FontWeight.Medium, color = Primary); Text(rangeLabel, Modifier.padding(top = 3.dp), style = MaterialTheme.typography.labelSmall, color = Muted) }; Text("按日", style = MaterialTheme.typography.labelSmall, color = Secondary) }
         val max = days.maxOfOrNull { it.focusMinutes }?.coerceAtLeast(1) ?: 1
         Row(Modifier.fillMaxWidth().height(88.dp).padding(top = 14.dp), Arrangement.spacedBy(8.dp), Alignment.Bottom) {
             days.forEach { day -> Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) { Text(day.focusMinutes.toString(), fontSize = 10.sp, color = Secondary); Spacer(Modifier.height(4.dp)); Box(Modifier.fillMaxWidth().height((52f * day.focusMinutes / max).coerceAtLeast(4f).dp).background(Ambient.copy(alpha = if (day.focusMinutes > 0) .72f else .1f), MaterialTheme.shapes.small)) } }
         }
-        Row(Modifier.fillMaxWidth().padding(top = 7.dp), Arrangement.spacedBy(8.dp)) { days.forEach { day -> Text("${day.date.monthValue}/${day.date.dayOfMonth}", Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 10.sp, color = Muted) } }
+        Row(Modifier.fillMaxWidth().padding(top = 7.dp), Arrangement.spacedBy(if (days.size <= 7) 8.dp else 3.dp)) { days.forEachIndexed { index, day -> Text(if (days.size <= 7) "${day.date.monthValue}/${day.date.dayOfMonth}\n${day.date.weekdayLabel()}" else if (index == 0 || index == days.lastIndex || index % 2 == 0) "${day.date.monthValue}/${day.date.dayOfMonth}" else "", Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 9.sp, lineHeight = 12.sp, color = Muted) } }
     }
 }
 
 @Composable private fun CalendarDistribution(title: String, days: List<ActivityDay>) {
     var selected by remember(days) { mutableStateOf<LocalDate?>(null) }
     GradientCard {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Text(title, fontWeight = FontWeight.Medium, color = Primary); Text("${days.firstOrNull()?.date ?: ""} 至 ${days.lastOrNull()?.date ?: ""}", style = MaterialTheme.typography.labelSmall, color = Muted) }
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) { Text(title, fontWeight = FontWeight.Medium, color = Primary); Text(formatCompactDateRange(days.firstOrNull()?.date, days.lastOrNull()?.date), style = MaterialTheme.typography.labelSmall, color = Muted) }
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), Arrangement.spacedBy(6.dp)) { listOf("一", "二", "三", "四", "五", "六", "日").forEach { Text(it, Modifier.weight(1f), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = Muted) } }
         val max = days.maxOfOrNull { it.focusMinutes }?.coerceAtLeast(1) ?: 1
         val cells = List((days.firstOrNull()?.date?.dayOfWeek?.value ?: 1) - 1) { null } + days.map { it }
@@ -1058,12 +1171,17 @@ internal fun nearestTrendPointIndex(tapX: Float, width: Float, count: Int, plotL
                     if (day == null) Spacer(Modifier.weight(1f)) else {
                         val level = day.focusMinutes.toFloat() / max
                         Box(Modifier.weight(1f).aspectRatio(1f).background(Ambient.copy(alpha = .08f + level * .58f), MaterialTheme.shapes.small).border(if (selected == day.date) 2.dp else 1.dp, if (selected == day.date) AmbientLight else BorderColor.copy(alpha = .45f), MaterialTheme.shapes.small).clickable { selected = day.date }, contentAlignment = Alignment.Center) {
-                            if (selected == day.date) Text(day.date.dayOfMonth.toString(), fontSize = 10.sp, color = Primary)
+                            Text(day.date.dayOfMonth.toString(), fontSize = 10.sp, color = if (level > .48f) Primary else Secondary)
                         }
                     }
                 }
                 repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
             }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("少", fontSize = 10.sp, color = Muted)
+            Row(Modifier.padding(horizontal = 7.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) { listOf(.12f, .28f, .46f, .66f).forEach { alpha -> Box(Modifier.size(9.dp).background(Ambient.copy(alpha = alpha), MaterialTheme.shapes.extraSmall)) } }
+            Text("多", fontSize = 10.sp, color = Muted)
         }
         selected?.let { date -> days.firstOrNull { it.date == date }?.let { day -> Text(heatmapDayDescription(date, day.focusMinutes), Modifier.fillMaxWidth().padding(top = 10.dp).background(SurfaceHigh, MaterialTheme.shapes.small).padding(10.dp), style = MaterialTheme.typography.labelSmall, color = Primary) } }
     }
@@ -1072,10 +1190,12 @@ internal fun nearestTrendPointIndex(tapX: Float, width: Float, count: Int, plotL
 @Composable private fun WeeklyDistribution(days: List<ActivityDay>) {
     val weeks = days.chunked(7).map { group -> group.first().date to group.sumOf { it.focusMinutes } }
     GradientCard {
-        Text("所选日期的专注趋势", fontWeight = FontWeight.Medium, color = Primary)
-        Text("范围较长，按周汇总", style = MaterialTheme.typography.labelSmall, color = Muted)
+        Text("时间的潮汐", fontWeight = FontWeight.Medium, color = Primary)
+        Text("范围较长，按周汇总专注时长", style = MaterialTheme.typography.labelSmall, color = Muted)
         val max = weeks.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
         Row(Modifier.fillMaxWidth().height(86.dp).padding(top = 14.dp), Arrangement.spacedBy(4.dp), Alignment.Bottom) { weeks.forEach { (_, value) -> Box(Modifier.weight(1f).height((58f * value / max).coerceAtLeast(4f).dp).background(Ambient.copy(alpha = if (value > 0) .72f else .1f), MaterialTheme.shapes.extraSmall)) } }
+        val labels = if (weeks.size <= 4) weeks else listOf(weeks.first(), weeks[weeks.lastIndex / 2], weeks.last())
+        Row(Modifier.fillMaxWidth().padding(top = 7.dp), Arrangement.SpaceBetween) { labels.forEach { (date, _) -> Text("${date.monthValue}/${date.dayOfMonth}", fontSize = 10.sp, color = Muted) } }
     }
 }
 
@@ -1224,9 +1344,9 @@ private fun RecentFocus(events: List<FocusEvent>, sounds: List<SoundUsageEvent>,
 @Composable private fun ReplayLine(icon: ImageVector, title: String, subtitle: String?, tint: Color = AmbientLight) { Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(40.dp).background(SurfaceHigh, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, Modifier.size(17.dp), tint = tint) }; Column(Modifier.padding(start = 12.dp)) { Text(title, fontSize = 14.sp, lineHeight = 20.sp, color = Primary); subtitle?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = Secondary) } } } }
 @Composable private fun StatusTag(status: SessionStatus) { Text(if (status == SessionStatus.COMPLETED) "已完成" else "已中断", Modifier.background((if (status == SessionStatus.COMPLETED) Ambient else Danger).copy(alpha = .1f), MaterialTheme.shapes.small).padding(horizontal = 8.dp, vertical = 5.dp), style = MaterialTheme.typography.labelSmall, color = if (status == SessionStatus.COMPLETED) AmbientLight else Danger) }
 @Composable private fun Metric(label: String, value: String, unit: String, modifier: Modifier) { Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) { Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) { Text(value, style = MaterialTheme.typography.headlineSmall, color = Primary, fontFamily = FontFamily.Monospace); Text(unit, style = MaterialTheme.typography.labelSmall, color = Secondary) }; Text(label, style = MaterialTheme.typography.labelSmall, color = Muted) } }
-@Composable private fun SectionBorder(content: @Composable ColumnScope.() -> Unit) { Column(Modifier.fillMaxWidth()) { HorizontalDivider(color = BorderColor); Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), content = content); HorizontalDivider(color = BorderColor) } }
+@Composable private fun SectionBorder(content: @Composable ColumnScope.() -> Unit) { Column(Modifier.fillMaxWidth().padding(vertical = 4.dp), content = content) }
 @Composable private fun CardBlock(padding: androidx.compose.ui.unit.Dp = 16.dp, content: @Composable ColumnScope.() -> Unit) { Column(Modifier.fillMaxWidth().border(1.dp, BorderColor, MaterialTheme.shapes.medium).background(SurfaceLow, MaterialTheme.shapes.medium).padding(padding), content = content) }
-@Composable private fun GradientCard(padding: androidx.compose.ui.unit.Dp = 16.dp, content: @Composable ColumnScope.() -> Unit) { Column(Modifier.fillMaxWidth().border(1.dp, BorderColor, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(SurfaceHigh, SurfaceColor)), androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(padding), content = content) }
+@Composable private fun GradientCard(padding: androidx.compose.ui.unit.Dp = 16.dp, content: @Composable ColumnScope.() -> Unit) { Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(SurfaceHigh.copy(alpha = .86f), SurfaceColor.copy(alpha = .72f))), MaterialTheme.shapes.medium).padding(padding), content = content) }
 @Composable private fun <T> Segmented(values: List<T>, selected: T, label: (T) -> String, change: (T) -> Unit) { Row(Modifier.fillMaxWidth().border(1.dp, BorderColor, MaterialTheme.shapes.large).background(SurfaceColor, MaterialTheme.shapes.large).padding(4.dp), Arrangement.spacedBy(4.dp)) { values.forEach { SegmentButton(label(it), selected == it, Modifier.weight(1f)) { change(it) } } } }
 @Composable private fun SegmentButton(label: String, selected: Boolean, modifier: Modifier = Modifier, click: () -> Unit) { Box(modifier.heightIn(min = 40.dp).background(if (selected) SurfaceHigh else Color.Transparent, MaterialTheme.shapes.medium).border(1.dp, if (selected) BorderStrong else Color.Transparent, MaterialTheme.shapes.medium).clickable(onClick = click), contentAlignment = Alignment.Center) { Text(label, style = MaterialTheme.typography.labelSmall, color = if (selected) Primary else Muted, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) } }
 
@@ -1247,6 +1367,27 @@ private fun formatMinutesChinese(value: Int) = if (value >= 60) "${value / 60}�
 private fun metricValue(value: Int) = if (value >= 60) "${value / 60}h" else value.toString()
 private fun metricUnit(value: Int) = if (value >= 60) "${value % 60}m" else "m"
 private fun formatEventTime(value: Long): String = DateTimeFormatter.ofPattern("M/d HH:mm").format(Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()))
+private fun formatTimelineClock(value: Long): String = DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()))
+private fun formatCompactDateRange(start: LocalDate?, end: LocalDate?): String = when {
+    start == null || end == null -> ""
+    start == end -> "${start.monthValue}月${start.dayOfMonth}日"
+    start.year == end.year -> "${start.monthValue}/${start.dayOfMonth}–${end.monthValue}/${end.dayOfMonth}"
+    else -> "${start.year}/${start.monthValue}/${start.dayOfMonth}–${end.year}/${end.monthValue}/${end.dayOfMonth}"
+}
+private fun LocalDate.weekdayLabel() = when (dayOfWeek.value) { 1 -> "周一"; 2 -> "周二"; 3 -> "周三"; 4 -> "周四"; 5 -> "周五"; 6 -> "周六"; else -> "周日" }
+private fun formatTrendAxisLabel(hours: Float): String {
+    val minutes = (hours * 60f).roundToInt()
+    return when {
+        minutes == 0 -> "0"
+        minutes < 60 -> "${minutes}m"
+        minutes % 60 == 0 -> "${minutes / 60}h"
+        else -> "${formatHourValue(hours)}h"
+    }
+}
+private fun formatTrendAmount(hours: Float): String {
+    val minutes = (hours * 60f).roundToInt().coerceAtLeast(0)
+    return if (minutes < 60) "${minutes}分钟" else if (minutes % 60 == 0) "${minutes / 60}小时" else "${minutes / 60}小时${minutes % 60}分"
+}
 private fun percent1(minutes: Int, total: Int): Float = (minutes * 1000f / total).roundToInt() / 10f
 private fun percentLabel(value: Float): String { val tenths = (value * 10).roundToInt(); return if (tenths % 10 == 0) "${tenths / 10}%" else "${tenths / 10}.${tenths % 10}%" }
 private fun roundHours(minutes: Int): Float = (minutes * 100f / 60f).roundToInt() / 100f
